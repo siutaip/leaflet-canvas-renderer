@@ -1,0 +1,60 @@
+{
+  "name": "leaflet-canvas-renderer",
+  "version": "1.0.0",
+  "description": "Performatic way to display a lot of elements with interaction in a leaflet map",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build:dev": "webpack --mode=development --watch --progress",
+    "build:prod": "webpack --mode=production",
+    "prepublishOnly": "webpack --mode=production",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\"",
+    "lint:fix": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/siutaip/leaflet-canvas-renderer.git"
+  },
+  "keywords": [
+    "leaflet",
+    "canvas",
+    "overlay",
+    "performance"
+  ],
+  "author": "Vinicius 'SIUTA' <vinicius.borges@intelipost.com.br>",
+  "homepage": "https://github.com/siutaip/leaflet-canvas-renderer",
+  "devDependencies": {
+    "@babel/core": "^7.13.15",
+    "@types/jest": "^26.0.22",
+    "@typescript-eslint/eslint-plugin": "^4.21.0",
+    "@typescript-eslint/parser": "^4.21.0",
+    "autoprefixer": "^10.2.5",
+    "babel-loader": "^8.2.2",
+    "clean-webpack-plugin": "^3.0.0",
+    "css-loader": "^5.2.1",
+    "cypress": "^7.0.1",
+    "eslint": "^7.24.0",
+    "eslint-config-prettier": "^8.1.0",
+    "eslint-plugin-prettier": "^3.4.0",
+    "jest": "^26.6.3",
+    "node-sass": "^5.0.0",
+    "postcss": "^8.2.10",
+    "postcss-loader": "^5.2.0",
+    "prettier": "^2.2.1",
+    "sass": "^1.32.8",
+    "sass-loader": "^11.0.1",
+    "style-loader": "^2.0.0",
+    "ts-jest": "^26.5.4",
+    "ts-loader": "^8.1.0",
+    "typescript": "^4.2.4",
+    "webpack": "^5.31.2",
+    "webpack-cli": "^4.6.0"
+  }
+}
