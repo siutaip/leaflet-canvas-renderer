@@ -1,5 +1,1 @@
-function helloWorld() {
-  console.log('Hello World!');
-}
-
-export { helloWorld };
+export { Markers } from './Markers';
