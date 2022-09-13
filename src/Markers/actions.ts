@@ -13,7 +13,6 @@ export default function ({
    * @param {string | null | false } dragging  Marker.id or false to stop dragging
    */
   function setDragging(dragging: boolean | string | null = null) {
-    console.log('setDragging', typeof dragging, dragging);
     if (!dragging) {
       overlay._map.dragging.enable();
     } else {

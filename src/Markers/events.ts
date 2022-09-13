@@ -1,17 +1,18 @@
+import { MarkersOptions } from 'src/types';
 import Actions from './actions';
 
 export default function ({
   overlay,
   setState,
   state,
-  defaults,
   renderer,
+  options,
 }: {
   overlay: any;
   state: any;
   setState: any;
-  defaults: any;
   renderer: any;
+  options: MarkersOptions;
 }) {
   const actions = Actions({ state, setState, overlay });
   /**
@@ -46,26 +47,23 @@ export default function ({
     return Object.keys(state.viewport).reduce((markers, id) => {
       const marker = state.viewport[id];
 
-      const markerStart = {
-        x: marker.x - defaults.markerWidth / 2,
-        y: marker.y - defaults.markerHeight,
-      };
-      const markerEnd = {
-        x: marker.x + defaults.markerWidth / 2,
+      const markerPosition = {
+        x: marker.x,
         y: marker.y,
       };
 
-      if (x >= markerStart.x && x <= markerEnd.x) {
-        if (y >= markerStart.y && y <= markerEnd.y) {
-          return [...markers, id];
-        }
+      const cursorPosition = { x, y };
+
+      if (options.hasTouch(markerPosition, cursorPosition)) {
+        return [...markers, id];
       }
 
       return markers;
     }, []);
   }
 
-  type LeafletMouseEvent = {
+  type LeafletMouseEvent = Event & {
+    [key: string]: any;
     containerPoint: {
       x: number;
       y: number;

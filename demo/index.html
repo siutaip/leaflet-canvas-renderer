@@ -44,7 +44,59 @@
 
       const { Markers } = window.LeafletCanvasRenderer;
 
-      const markers = Markers();
+      const images = { markerIcon: null, markerShadow: null };
+
+      const markers = Markers({
+        preload() {
+          return new Promise((resolve) => {
+            let imagesLoaded = 0;
+
+            const imageLoad = () => {
+              imagesLoaded += 1;
+              if (imagesLoaded >= 2) {
+                resolve();
+              }
+            };
+
+            images.markerIcon = new Image();
+            images.markerIcon.src = '/demo/marker-icon.png';
+            images.markerIcon.onload = imageLoad;
+
+            images.markerShadow = new Image();
+            images.markerShadow.src = '/demo/marker-shadow.png';
+            images.markerShadow.onload = imageLoad;
+          });
+        },
+        hasTouch(marker, { x, y }) {
+          const markerStart = {
+            x: marker.x - images.markerIcon.width / 2,
+            y: marker.y - images.markerIcon.height,
+          };
+          const markerEnd = {
+            x: marker.x + images.markerIcon.width / 2,
+            y: marker.y,
+          };
+
+          if (x >= markerStart.x && x <= markerEnd.x) {
+            if (y >= markerStart.y && y <= markerEnd.y) {
+              return true;
+            }
+          }
+          return false;
+        },
+        draw(context, { x, y }) {
+          context.drawImage(
+            images.markerShadow,
+            x - images.markerIcon.width / 2,
+            y - images.markerIcon.height,
+          );
+          context.drawImage(
+            images.markerIcon,
+            x - images.markerIcon.width / 2,
+            y - images.markerIcon.height,
+          );
+        },
+      });
 
       markers.addTo(map);
 

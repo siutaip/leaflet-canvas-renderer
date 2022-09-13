@@ -2,36 +2,14 @@ import { canvasOverlay } from '../CanvasOverlay';
 import { setState, state } from '../state';
 import Events from './events';
 import Renderer from './renderer';
-import { List, Marker, MarkerWithPosition } from '../types';
+import { List, Marker, MarkerWithPosition, MarkersOptions } from '../types';
 
-const defaults = {
-  markerWidth: 25,
-  markerHeight: 41,
-};
-
-export function Markers(markers = {}) {
+export function Markers(options: MarkersOptions) {
   const overlay = canvasOverlay();
-  const renderer = Renderer({ state, overlay, ...preloadImages(), defaults });
-  const events = Events({ overlay, state, setState, renderer, defaults });
-
-  function preloadImages(): { markerShadow: any; markerIcon: any } {
-    const markerIcon = new Image();
-    let imagesLoaded = 0;
-
-    const imageLoad = () => {
-      imagesLoaded += 1;
-      if (imagesLoaded >= 2) render();
-    };
-
-    markerIcon.src = '/demo/marker-icon.png';
-    markerIcon.onload = imageLoad;
-
-    const markerShadow = new Image();
-    markerShadow.src = '/demo/marker-shadow.png';
-    markerShadow.onload = imageLoad;
-
-    return { markerIcon, markerShadow };
-  }
+  const markers = options.markers;
+  const renderer = Renderer({ state, overlay, options });
+  const events = Events({ overlay, state, setState, renderer, options });
+  options.preload().then(() => render());
 
   setState({ ...state, markers });
 

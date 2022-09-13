@@ -1,23 +1,13 @@
-import { MarkersState } from '../types';
+import { MarkersState, MarkersOptions, Position } from '../types';
 
 type Injection = {
   overlay: any;
-  markerIcon: any;
-  markerShadow: any;
   state: MarkersState;
-  defaults: any;
+  options: MarkersOptions;
 };
 
-export default function ({
-  overlay,
-  state,
-  markerIcon,
-  markerShadow,
-  defaults,
-}: Injection) {
+export default function ({ overlay, state, options }: Injection) {
   function renderMarkers() {
-    console.log('loaded', state.viewport);
-
     const canvas = overlay.canvas();
     const context = canvas.getContext('2d');
     context.clearRect(0, 0, canvas.width, canvas.height);
@@ -28,7 +18,7 @@ export default function ({
       }
       const { x, y } = state.viewport[id];
 
-      renderMarker(x, y, canvas);
+      renderMarker(x, y, context);
     });
   }
 
@@ -39,24 +29,43 @@ export default function ({
 
     if (!state.dragging) return;
     const { x, y } = state.viewport[state.dragging];
-    renderMarker(x, y, canvas);
+    renderMarker(x, y, context);
   }
 
   // function renderHoverMarker() {}
 
-  function renderMarker(x: number, y: number, canvas: any) {
-    const context = canvas.getContext('2d');
+  function renderMarker(
+    x: number,
+    y: number,
+    context: CanvasRenderingContext2D,
+  ) {
+    if (typeof options.draw == 'function') {
+      options.draw(context, { x, y });
+    } else {
+      drawPin(context, { x, y });
+    }
+  }
 
-    context.drawImage(
-      markerShadow,
-      x - defaults.markerWidth / 2,
-      y - defaults.markerHeight,
-    );
-    context.drawImage(
-      markerIcon,
-      x - defaults.markerWidth / 2,
-      y - defaults.markerHeight,
-    );
+  function drawPin(context: CanvasRenderingContext2D, { x, y }: Position) {
+    context.save();
+    context.translate(x, y);
+
+    context.beginPath();
+    context.moveTo(0, 0);
+    context.bezierCurveTo(2, -10, -20, -25, 0, -30);
+    context.bezierCurveTo(20, -25, -2, -10, 0, 0);
+    context.fillStyle = 'black';
+    context.fill();
+    context.strokeStyle = 'black';
+    context.lineWidth = 1.5;
+    context.stroke();
+    context.beginPath();
+    context.arc(0, -21, 3, 0, Math.PI * 2);
+    context.closePath();
+    context.fillStyle = 'black';
+    context.fill();
+
+    context.restore();
   }
 
   return {

@@ -30,3 +30,15 @@ export type MarkerWithPosition = Marker & {
 export type List<Type> = {
   [key: string]: Type;
 };
+
+export type Position = {
+  x: number;
+  y: number;
+};
+
+export type MarkersOptions = {
+  markers: List<Marker>;
+  preload: () => Promise<void>;
+  hasTouch: (markerPosition: Position, cursorPosition: Position) => boolean;
+  draw: (context: CanvasRenderingContext2D, position: Position) => void;
+};
