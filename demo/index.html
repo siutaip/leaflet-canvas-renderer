@@ -47,6 +47,19 @@
       const images = { markerIcon: null, markerShadow: null };
 
       const markers = Markers({
+        onMove(point) {
+          console.log(
+            `onMove: ${point.id} - new position: (${point.lat}, ${point.lng})`,
+          );
+        },
+        onHover(id) {
+          console.log(`onHover: ${id}`);
+        },
+
+        onClick(id) {
+          console.log(`onClick: ${id}`);
+        },
+
         preload() {
           return new Promise((resolve) => {
             let imagesLoaded = 0;

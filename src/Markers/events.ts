@@ -1,6 +1,14 @@
 import { MarkersOptions } from 'src/types';
 import Actions from './actions';
 
+type LeafletMouseEvent = Event & {
+  [key: string]: any;
+  containerPoint: {
+    x: number;
+    y: number;
+  };
+};
+
 export default function ({
   overlay,
   setState,
@@ -62,16 +70,11 @@ export default function ({
     }, []);
   }
 
-  type LeafletMouseEvent = Event & {
-    [key: string]: any;
-    containerPoint: {
-      x: number;
-      y: number;
-    };
-  };
-
   function handleDragStart({ containerPoint: { x, y } }: LeafletMouseEvent) {
     actions.setDragging(findMarker(x, y));
+    setState({
+      dragStart: { x, y },
+    });
     renderer.renderMarkers();
     renderer.renderDraggingMarker();
   }
@@ -92,15 +95,48 @@ export default function ({
     renderer.renderDraggingMarker();
   }
 
-  function handleDragEnd({ containerPoint }: LeafletMouseEvent) {
+  function handleDragEnd({ containerPoint: { x, y } }: LeafletMouseEvent) {
     if (!state.dragging) return;
 
-    const { lat, lng } = overlay._map.containerPointToLatLng(containerPoint);
+    if (state.dragStart.x === x && state.dragStart.y === y) {
+      actions.setDragging(false);
+      return;
+    }
+    const { lat, lng } = overlay._map.containerPointToLatLng({ x, y });
+
     actions.saveMarkerPosition({ lat, lng });
+
+    options.onMove({
+      id: state.dragging,
+      ...state.list[state.dragging],
+    });
 
     actions.setDragging(false);
     renderer.renderMarkers();
     renderer.renderDraggingMarker();
   }
-  return { handleDragEnd, handleDragMove, handleDragStart };
+
+  function handleClick({ containerPoint: { x, y } }: LeafletMouseEvent) {
+    const id = findMarker(x, y);
+
+    if (id && typeof options.onClick === 'function') {
+      options.onClick(id);
+    }
+  }
+
+  function handleHover({ containerPoint: { x, y } }: LeafletMouseEvent) {
+    const id = findMarker(x, y);
+
+    if (id && typeof options.onHover === 'function') {
+      options.onHover(id);
+    }
+  }
+
+  return {
+    handleDragEnd,
+    handleDragMove,
+    handleDragStart,
+    handleClick,
+    handleHover,
+  };
 }

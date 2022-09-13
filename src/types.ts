@@ -14,12 +14,20 @@ export type MarkersState = {
   dragging: string;
   hovering: string;
   event: CanvasEvent | null;
+  dragStart: {
+    x: number;
+    y: number;
+  };
 };
 
 export type Marker = {
   lat: number;
   lng: number;
   order: number;
+};
+
+export type MarkerWithId = Marker & {
+  id: string;
 };
 
 export type MarkerWithPosition = Marker & {
@@ -37,6 +45,9 @@ export type Position = {
 };
 
 export type MarkersOptions = {
+  onMove: (marker: MarkerWithId) => void;
+  onHover: (id: string) => void;
+  onClick: (id: string) => void;
   markers: List<Marker>;
   preload: () => Promise<void>;
   hasTouch: (markerPosition: Position, cursorPosition: Position) => boolean;

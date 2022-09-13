@@ -44,6 +44,8 @@ export function Markers(options: MarkersOptions) {
 
       setupViewport();
 
+      map.on('click', events.handleClick);
+      map.on('mousemove', events.handleHover);
       map.on('mousedown', events.handleDragStart);
       map.on('mouseup', events.handleDragEnd);
       map.on('mousemove', events.handleDragMove);

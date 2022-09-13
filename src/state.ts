@@ -15,6 +15,11 @@ export const state: MarkersState = {
 
   dragging: null,
   hovering: null,
+
+  dragStart: {
+    x: 0,
+    y: 0,
+  },
 };
 
 export function setState(newState: { [key: string]: any }) {
