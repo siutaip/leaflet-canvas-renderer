@@ -34,30 +34,37 @@
   <body>
     <div id="map"></div>
 
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/uuid/8.3.2/uuid.min.js"
+      integrity="sha512-UNM1njAgOFUa74Z0bADwAq8gbTcqZC8Ej4xPSzpnh0l6KMevwvkBvbldF9uR++qKeJ+MOZHRjV1HZjoRvjDfNQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
     <script>
-      const map = L.map('map').setView([51.505, -0.09], 13);
+      const map = L.map('map').setView(
+        [-20.413442150600797, -115.15749652566164],
+        4,
+      );
 
       L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
         attribution: '© OpenStreetMap',
       }).addTo(map);
 
-      const { Markers } = window.LeafletCanvasRenderer;
+      const { Markers, Polylines } = window.LeafletCanvasRenderer;
 
       const images = { markerIcon: null, markerShadow: null };
 
       const markers = Markers({
         onMove(point) {
-          console.log(
-            `onMove: ${point.id} - new position: (${point.lat}, ${point.lng})`,
-          );
+          return;
         },
         onHover(id) {
-          console.log(`onHover: ${id}`);
+          return;
         },
 
         onClick(id) {
-          console.log(`onClick: ${id}`);
+          return;
         },
 
         preload() {
@@ -116,12 +123,69 @@
       window.setTimeout(() => {
         markers.add({
           xyz123: {
-            lat: 51.505,
-            lng: -0.09,
+            lat: -20.413442150600797,
+            lng: -115.15749652566164,
             order: 1,
           },
         });
       }, 1000);
+
+      // Polylines:
+
+      function random(min, max) {
+        return Math.random() * (max - min + 1) + min;
+      }
+      function generateRoute([minPoints, maxPoints]) {
+        const id = uuid.v4();
+        const points = [];
+        const numberOfPoints = ~~random(minPoints, maxPoints);
+
+        const latMin = -53.69670647530323;
+        const latMax = 21.69826549685252;
+
+        const lngMin = -196.34765625000003;
+        const lngMax = -33.92578125000001;
+
+        for (let pointIndex = 0; pointIndex < numberOfPoints; pointIndex++) {
+          const refLat = points[pointIndex - 1]?.lat || random(latMin, latMax);
+          const refLng = points[pointIndex - 1]?.lng || random(lngMin, lngMax);
+          const diff = 1;
+          const xDirection = random(0, 10) > 5 ? -1 : 1;
+          const yDirection = random(0, 10) > 5 ? -1 : 1;
+          const moveLat = xDirection * diff;
+          const moveLng = yDirection * diff;
+          const lat = refLat + moveLat;
+          const lng = refLng + moveLng;
+          points.push({ lat, lng });
+        }
+
+        return {
+          id,
+          points,
+        };
+      }
+
+      function fetchRoutes(
+        numberOfRoutes = 300,
+        rangeOfPointsInRoute = [100, 500],
+      ) {
+        const routes = [];
+        for (let routeIndex = 0; routeIndex < numberOfRoutes; routeIndex++) {
+          routes.push(generateRoute(rangeOfPointsInRoute));
+        }
+        return routes;
+      }
+
+      const polylines = Polylines({
+        onHover(id) {
+          console.log(`Polyline hover ${id}`);
+        },
+        onClick(id) {
+          console.log(`Polyline click ${id}`);
+        },
+      });
+      polylines.addTo(map);
+      polylines.add(fetchRoutes(30));
     </script>
   </body>
 </html>

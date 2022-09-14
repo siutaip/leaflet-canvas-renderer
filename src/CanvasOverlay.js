@@ -1,8 +1,8 @@
 import * as L from 'leaflet';
 
 const CanvasOverlay = L.Layer.extend({
-  initialize: function (userDrawFunc, options) {
-    this._userDrawFunc = userDrawFunc;
+  initialize: function (props, options) {
+    this.props = props;
     L.setOptions(this, options);
   },
 
@@ -40,6 +40,7 @@ const CanvasOverlay = L.Layer.extend({
     // create main canvas element
     this._canvas = L.DomUtil.create('canvas', 'leaflet-heatmap-layer');
     this._canvas.style.position = 'absolute';
+    this._canvas.style.zIndex = this.props.zIndex;
 
     this._canvas.width = size.x;
     this._canvas.height = size.y;
@@ -56,6 +57,7 @@ const CanvasOverlay = L.Layer.extend({
       'leaflet-heatmap-layer secondary',
     );
     this._secondaryCanvas.style.position = 'absolute';
+    this._secondaryCanvas.style.zIndex = this.props.zIndex + 1;
 
     this._secondaryCanvas.width = size.x;
     this._secondaryCanvas.height = size.y;
@@ -136,11 +138,10 @@ const CanvasOverlay = L.Layer.extend({
 
   _animateZoom: function (e) {
     const scale = this._map.getZoomScale(e.zoom),
-      offset = this._map;
-    offset = this._map
-      ._getCenterOffset(e.center)
-      ._multiplyBy(-scale)
-      .subtract(this._map._getMapPanePos());
+      offset = this._map
+        ._getCenterOffset(e.center)
+        ._multiplyBy(-scale)
+        .subtract(this._map._getMapPanePos());
 
     L.DomUtil.setTransform(this._canvas, offset, scale);
     L.DomUtil.setTransform(this._secondaryCanvas, offset, scale);

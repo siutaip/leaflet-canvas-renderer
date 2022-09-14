@@ -1,13 +1,6 @@
 import { MarkersOptions } from 'src/types';
 import Actions from './actions';
-
-type LeafletMouseEvent = Event & {
-  [key: string]: any;
-  containerPoint: {
-    x: number;
-    y: number;
-  };
-};
+import { LeafletMouseEvent } from 'leaflet';
 
 export default function ({
   overlay,

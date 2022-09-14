@@ -5,7 +5,9 @@ import Renderer from './renderer';
 import { List, Marker, MarkerWithPosition, MarkersOptions } from '../types';
 
 export function Markers(options: MarkersOptions) {
-  const overlay = canvasOverlay();
+  const overlay = canvasOverlay({
+    zIndex: 300,
+  });
   const markers = options.markers;
   const renderer = Renderer({ state, overlay, options });
   const events = Events({ overlay, state, setState, renderer, options });
