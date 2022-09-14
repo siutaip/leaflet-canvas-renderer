@@ -50,7 +50,7 @@ export function Markers(options: MarkersOptions) {
       map.on('mouseup', events.handleDragEnd);
       map.on('mousemove', events.handleDragMove);
 
-      map.on('move', () => {
+      map.on('moveend', () => {
         update();
         render();
       });
