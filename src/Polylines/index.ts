@@ -1,29 +1,57 @@
 import { canvasOverlay } from '../CanvasOverlay';
-import type { Map } from 'leaflet';
-import type { Polyline, Options, Point } from './types';
-import { createState } from './state';
-import Renderer from './renderer';
-import Events from './events';
+import type { Overlay } from '../types';
+import type { Polyline, Props, Point, State } from './types';
+import type { CanvasOverlayContext } from '../types';
+import { drawPrimary, drawSecondary } from './renderer';
+import { handleHover, handleClick } from './events';
 
-export function Polylines(options: Options) {
-  const overlay = canvasOverlay({
+const defaultProps: Props = {
+  list: [],
+  hoverColor: 'red',
+  defaultColor: 'white',
+};
+
+export function Polylines(p: Props = {}) {
+  const props = { ...defaultProps, ...p };
+
+  const context: CanvasOverlayContext<State, Polyline> = {
     zIndex: 100,
-  });
-  const { state, setState } = createState();
-  const renderer = Renderer({ state, setState, overlay, options });
-  const events = Events({ overlay, state, setState, renderer, options });
 
-  setState({ list: options.list || [] });
+    state: {
+      list: [],
+      viewport: [],
+      paths: [],
+      hovering: null,
+    },
 
-  function update() {
-    setupViewport();
-  }
+    events: function () {
+      this._map.on('mousemove', handleHover.bind(this));
+      this._map.on('click', handleClick.bind(this));
+    },
+
+    actions: {
+      add: function (polyline) {
+        if (Array.isArray(polyline)) {
+          this.setState({ list: [...this.state.list, ...polyline] });
+        } else {
+          this.setState({ list: [...this.state.list, polyline] });
+        }
+        this.redraw();
+      },
+    },
+
+    drawPrimary,
+    drawSecondary,
+    setupViewport,
+  };
+
+  const overlay: Overlay<Props> = canvasOverlay(context, props);
 
   function setupViewport() {
-    setState({
-      viewport: state.list.filter((route: Polyline) => {
+    this.setState({
+      viewport: this.state.list.filter((route: Polyline) => {
         const pointsInViewport = route.points.filter(({ lat, lng }: Point) => {
-          overlay._map.getBounds().contains({ lat, lng });
+          this._map.getBounds().contains({ lat, lng });
         });
 
         return pointsInViewport.length > 0;
@@ -31,42 +59,5 @@ export function Polylines(options: Options) {
     });
   }
 
-  function render() {
-    renderer.drawLines();
-    renderer.renderActiveLine();
-  }
-
-  return {
-    overlay,
-
-    addTo(map: any) {
-      overlay.addTo(map);
-
-      setupViewport();
-
-      map.on('mousemove', events.handleHover);
-      map.on('click', events.handleClick);
-
-      map.on('moveend', () => {
-        update();
-        render();
-      });
-
-      map.on('movestart', () => {
-        map.isDragging = true;
-      });
-
-      map.on('moveend', () => {
-        map.isDragging = false;
-      });
-    },
-
-    add(list: Array<Polyline>) {
-      setState({
-        list: [...state.list, ...list],
-      });
-      setupViewport();
-      render();
-    },
-  };
+  return overlay;
 }

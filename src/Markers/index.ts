@@ -1,69 +1,72 @@
 import { canvasOverlay } from '../CanvasOverlay';
-import { setState, state } from '../state';
-import Events from './events';
-import Renderer from './renderer';
-import { List, Marker, MarkerWithPosition, MarkersOptions } from '../types';
+import type { Overlay } from '../types';
+import type { Marker, MarkerWithPosition, Props, State } from './types';
+import type { CanvasOverlayContext } from '../types';
+import { drawPrimary, drawSecondary } from './renderer';
+import {
+  handleHover,
+  handleClick,
+  handleDragStart,
+  handleDragEnd,
+  handleDragMove,
+} from './events';
 
-export function Markers(options: MarkersOptions) {
-  const overlay = canvasOverlay({
-    zIndex: 300,
-  });
-  const markers = options.markers;
-  const renderer = Renderer({ state, overlay, options });
-  const events = Events({ overlay, state, setState, renderer, options });
-  options.preload().then(() => render());
+export function Markers(props: Props = { list: [] }) {
+  const context: CanvasOverlayContext<State, Marker> = {
+    zIndex: 200,
 
-  setState({ ...state, markers });
+    state: {
+      list: [],
+      viewport: [],
+      dragging: null,
+      hovering: null,
+      dragStart: null,
+    },
 
-  function update() {
-    setupViewport();
-  }
+    events: function () {
+      if (typeof this.props.preload === 'function') {
+        this.props.preload().then(() => this.redraw());
+      }
 
-  function render() {
-    renderer.renderMarkers();
-    renderer.renderDraggingMarker();
-  }
+      this._map.on('click', handleClick.bind(this));
+      this._map.on('mousemove', handleHover.bind(this));
+      this._map.on('mousedown', handleDragStart.bind(this));
+      this._map.on('mouseup', handleDragEnd.bind(this));
+      this._map.on('mousemove', handleDragMove.bind(this));
+    },
+
+    actions: {
+      add: function (marker) {
+        if (Array.isArray(marker)) {
+          this.setState({ list: [...this.state.list, ...marker] });
+        } else {
+          this.setState({ list: [...this.state.list, marker] });
+        }
+        setupViewport.call(this);
+        this.redraw();
+      },
+    },
+
+    drawPrimary,
+    drawSecondary,
+    setupViewport,
+  };
+
+  const overlay: Overlay<Props> = canvasOverlay(context, props);
 
   function setupViewport() {
-    const viewport: List<MarkerWithPosition> = {};
-
-    Object.keys(state.list).forEach((id) => {
-      const { lat, lng } = state.list[id];
-      if (overlay._map.getBounds().contains({ lat, lng })) {
-        const pos = overlay._map.latLngToContainerPoint({ lat, lng });
-        viewport[id] = { lat, lng, x: pos.x, y: pos.y } as MarkerWithPosition;
-      }
+    this.setState({
+      viewport: this.state.list
+        .filter(({ lat, lng }: Marker) =>
+          overlay._map.getBounds().contains({ lat, lng }),
+        )
+        .map((marker: Marker) => {
+          const { lat, lng } = marker;
+          const { x, y } = overlay._map.latLngToContainerPoint({ lat, lng });
+          return { ...marker, x, y } as MarkerWithPosition;
+        }),
     });
-
-    setState({ viewport });
   }
 
-  return {
-    overlay,
-
-    addTo(map: any) {
-      overlay.addTo(map);
-
-      setupViewport();
-
-      map.on('click', events.handleClick);
-      map.on('mousemove', events.handleHover);
-      map.on('mousedown', events.handleDragStart);
-      map.on('mouseup', events.handleDragEnd);
-      map.on('mousemove', events.handleDragMove);
-
-      map.on('moveend', () => {
-        update();
-        render();
-      });
-    },
-
-    add(list: List<Marker>) {
-      setState({
-        list: { ...state.list, ...list },
-      });
-      setupViewport();
-      render();
-    },
-  };
+  return overlay;
 }

@@ -120,15 +120,14 @@
 
       markers.addTo(map);
 
-      window.setTimeout(() => {
-        markers.add({
-          xyz123: {
-            lat: -20.413442150600797,
-            lng: -115.15749652566164,
-            order: 1,
-          },
-        });
-      }, 1000);
+      markers.add([
+        {
+          id: 'xyz123',
+          lat: -20.413442150600797,
+          lng: -115.15749652566164,
+          order: 1,
+        },
+      ]);
 
       // Polylines:
 

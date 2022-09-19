@@ -1,58 +1,46 @@
-import { MarkersState } from 'src/types';
+import { LatLng } from 'leaflet';
+import { MarkerWithPosition, Marker, Position } from './types';
 
-export default function ({
-  overlay,
-  state,
-  setState,
-}: {
-  overlay: any;
-  state: MarkersState;
-  setState: any;
-}) {
-  /**
-   * @param {string | null | false } dragging  Marker.id or false to stop dragging
-   */
-  function setDragging(dragging: boolean | string | null = null) {
-    if (!overlay._map._data) {
-      overlay._map._data = {};
-    }
+/**
+ * @param {string | null | false } dragging  Marker.id or false to stop dragging
+ */
+export function setDragging(dragging: boolean | Marker = false) {
+  if (!this._map._data) {
+    this._map._data = {};
+  }
 
-    if (!dragging) {
-      overlay._map._data.dragging = null;
-      overlay._map.dragging.enable();
-    } else {
-      overlay._map.dragging.disable();
-      overlay._map._data.dragging = dragging;
-    }
+  if (!dragging) {
+    this._map._data.dragging = null;
+    this._map.dragging.enable();
+  } else {
+    this._map.dragging.disable();
+    this._map._data.dragging = dragging;
+  }
 
-    setState({
+  if (typeof dragging !== 'boolean') {
+    this.setState({
       dragging,
     });
   }
+}
 
-  function saveMarkerPosition({ lat, lng }: { lat: number; lng: number }) {
-    if (!state.dragging) return;
+export function saveMarkerPosition({ lat, lng, x, y }: Position & LatLng) {
+  if (!this.state.dragging) return;
 
-    setState({
-      ...state,
-      list: {
-        ...state.list,
-        [state.dragging]: {
-          ...state.list[state.dragging],
-          lat,
-          lng,
-        },
-      },
-      viewport: {
-        ...state.viewport,
-        [state.dragging]: {
-          ...state.viewport[state.dragging],
-          lat,
-          lng,
-        },
-      },
-    });
-  }
+  this.setState({
+    list: [
+      ...this.state.list.map((marker: Marker) => {
+        if (marker.id !== this.state.dragging.id) return marker;
 
-  return { saveMarkerPosition, setDragging };
+        return { ...marker, lat, lng };
+      }),
+    ],
+    viewport: [
+      ...this.state.viewport.map((marker: MarkerWithPosition) => {
+        if (marker.id !== this.state.dragging.id) return marker;
+        return { ...marker, lat, lng, x, y };
+      }),
+    ],
+    dragging: null,
+  });
 }

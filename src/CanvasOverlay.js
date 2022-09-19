@@ -1,9 +1,43 @@
 import * as L from 'leaflet';
 
 const CanvasOverlay = L.Layer.extend({
-  initialize: function (props, options) {
+  initialize: function (context, props) {
+    this.setContext(context);
+    this.setProps(props);
+
+    L.setOptions(this, {});
+  },
+
+  setState: function (newState) {
+    Object.keys(newState).forEach((key) => {
+      if (this.state.hasOwnProperty(key)) {
+        this.state[key] = newState[key];
+      }
+    });
+  },
+
+  setContext: function (context) {
+    // setup state
+    this.state = context.state || {};
+
+    // setup actions
+    this._context = context;
+    if (typeof context.actions === 'object') {
+      Object.keys(context.actions).forEach((key) => {
+        const action = context.actions[key];
+
+        if (typeof action === 'function') {
+          this[key] = action.bind(this);
+        }
+      });
+    }
+
+    // setup setup
+    this._events = context.events.bind(this);
+  },
+
+  setProps: function (props) {
     this.props = props;
-    L.setOptions(this, options);
   },
 
   drawing: function (userDrawFunc) {
@@ -34,39 +68,14 @@ const CanvasOverlay = L.Layer.extend({
   onAdd: function (map) {
     this._map = map;
 
-    const size = this._map.getSize();
-    const animated = this._map.options.zoomAnimation && L.Browser.any3d;
-
-    // create main canvas element
-    this._canvas = L.DomUtil.create('canvas', 'leaflet-heatmap-layer');
-    this._canvas.style.position = 'absolute';
-    this._canvas.style.zIndex = this.props.zIndex;
-
-    this._canvas.width = size.x;
-    this._canvas.height = size.y;
-
-    L.DomUtil.addClass(
-      this._canvas,
-      'leaflet-zoom-' + (animated ? 'animated' : 'hide'),
+    this._canvas = this._createCanvasElement(
+      'primary-canvas',
+      this._context.zIndex,
     );
-    map._panes.overlayPane.appendChild(this._canvas);
-
-    // create secondary canvas element
-    this._secondaryCanvas = L.DomUtil.create(
-      'canvas',
-      'leaflet-heatmap-layer secondary',
+    this._secondaryCanvas = this._createCanvasElement(
+      'secondary-canvas',
+      this._context.zIndex + 1,
     );
-    this._secondaryCanvas.style.position = 'absolute';
-    this._secondaryCanvas.style.zIndex = this.props.zIndex + 1;
-
-    this._secondaryCanvas.width = size.x;
-    this._secondaryCanvas.height = size.y;
-
-    L.DomUtil.addClass(
-      this._secondaryCanvas,
-      'leaflet-zoom-' + (animated ? 'animated' : 'hide'),
-    );
-    map._panes.overlayPane.appendChild(this._secondaryCanvas);
 
     map.on('moveend', this._reset, this);
     map.on('resize', this._resize, this);
@@ -75,7 +84,43 @@ const CanvasOverlay = L.Layer.extend({
       map.on('zoomanim', this._animateZoom, this);
     }
 
+    if (typeof this._events === 'function') {
+      this._events.call(this);
+    }
+
+    map.on('movestart', () => {
+      map.isDragging = true;
+    });
+
+    map.on('moveend', () => {
+      map.isDragging = false;
+    });
+
     this._reset();
+  },
+
+  _createCanvasElement(className, zIndex) {
+    const animated = this._map.options.zoomAnimation && L.Browser.any3d;
+    const size = this._map.getSize();
+    const element = L.DomUtil.create(
+      'canvas',
+      `leaflet-heatmap-layer ${className}`,
+    );
+    element.style.position = 'absolute';
+    if (zIndex) {
+      element.style.zIndex = zIndex;
+    }
+    element.width = size.x;
+    element.height = size.y;
+
+    L.DomUtil.addClass(
+      element,
+      'leaflet-zoom-' + (animated ? 'animated' : 'hide'),
+    );
+
+    this._map._panes.overlayPane.appendChild(element);
+
+    return element;
   },
 
   onRemove: function (map) {
@@ -107,6 +152,11 @@ const CanvasOverlay = L.Layer.extend({
     const topLeft = this._map.containerPointToLayerPoint([0, 0]);
     L.DomUtil.setPosition(this._canvas, topLeft);
     L.DomUtil.setPosition(this._secondaryCanvas, topLeft);
+
+    if (typeof this._context.setupViewport === 'function') {
+      this._context.setupViewport.call(this);
+    }
+
     this._redraw();
   },
 
@@ -119,17 +169,8 @@ const CanvasOverlay = L.Layer.extend({
 
     // console.time('process');
 
-    if (this._userDrawFunc) {
-      this._userDrawFunc(this, {
-        canvas: this._canvas,
-        secondaryCanvas: this._secondaryCanvas,
-        bounds: bounds,
-        size: size,
-        zoomScale: zoomScale,
-        zoom: zoom,
-        options: this.options,
-      });
-    }
+    this._context.drawPrimary.call(this);
+    this._context.drawSecondary.call(this);
 
     // console.timeEnd('process');
 
@@ -148,6 +189,6 @@ const CanvasOverlay = L.Layer.extend({
   },
 });
 
-export const canvasOverlay = function (userDrawFunc, options) {
-  return new CanvasOverlay(userDrawFunc, options);
+export const canvasOverlay = function (context, props) {
+  return new CanvasOverlay(context, props);
 };

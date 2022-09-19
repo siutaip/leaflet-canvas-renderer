@@ -1,82 +1,66 @@
-import type { State, setState, Polyline, Point, Options } from './types';
+import type { Polyline } from './types';
 
-export type Dependencies = {
-  overlay: any;
-  state: State;
-  setState: setState;
-  options: Options;
-};
+export function drawPrimary() {
+  const canvas = this.canvas();
+  const context = canvas.getContext('2d');
+  context.clearRect(0, 0, canvas.width, canvas.height);
 
-export default function Render({
-  overlay,
-  state,
-  setState,
-  options,
-}: Dependencies) {
-  function drawLines() {
-    const canvas = overlay.canvas();
-    const context = canvas.getContext('2d');
-    context.clearRect(0, 0, canvas.width, canvas.height);
+  this.setState({ paths: [] });
 
-    setState({ paths: [] });
+  this.state.list.forEach((polyline: Polyline) =>
+    drawLine.call(this, context, {
+      ...polyline,
+      color: polyline.color || this.props.defaultColor || 'white',
+    }),
+  );
+}
 
-    state.list.forEach((route) =>
-      drawLine(context, {
-        ...route,
-        color: route.color || options.defaultColor || 'white',
-      }),
-    );
-  }
+export function drawSecondary() {
+  const context = this.secondaryCanvas().getContext('2d');
+  const { width, height } = this.secondaryCanvas();
+  context.clearRect(0, 0, width, height);
 
-  function renderActiveLine() {
-    const canvas = overlay.secondaryCanvas();
-    const context = canvas.getContext('2d');
-    context.clearRect(0, 0, canvas.width, canvas.height);
+  if (this._map._data?.dragging) return;
 
-    if (overlay._map._data?.dragging) return;
+  const id = this.state.hovering;
+  if (!id) return;
 
-    const id = state.hovering;
-    if (!id) return;
-    const { points } = state.list.find(({ id: _id }) => id === _id);
-    drawLine(
-      context,
-      {
-        id,
-        points,
-        color: options.hoverColor || 'red',
-      },
-      15,
-    );
-  }
+  const { points } = this.state.list.find(
+    ({ id: _id }: Polyline) => id === _id,
+  );
+  drawLine.call(
+    this,
+    context,
+    {
+      id,
+      points,
+      color: this.props.hoverColor || 'red',
+    },
+    15,
+  );
+}
 
-  function drawLine(
-    context: CanvasRenderingContext2D,
-    { points, id, color }: Polyline,
-    size = 4,
-  ) {
-    const path = new Path2D();
-    context.strokeStyle = color;
-    context.lineWidth = size;
+function drawLine(
+  context: CanvasRenderingContext2D,
+  { points, id, color }: Polyline,
+  size = 4,
+) {
+  const path = new Path2D();
+  context.strokeStyle = color;
+  context.lineWidth = size;
 
-    points.forEach(({ lat, lng }, index) => {
-      const { x, y } = overlay._map.latLngToContainerPoint({ lat, lng });
+  points.forEach(({ lat, lng }, index) => {
+    const { x, y } = this._map.latLngToContainerPoint({ lat, lng });
 
-      if (index === 0) {
-        path.moveTo(x, y);
-        return;
-      }
+    if (index === 0) {
+      path.moveTo(x, y);
+      return;
+    }
 
-      path.lineTo(x, y);
-    });
+    path.lineTo(x, y);
+  });
 
-    context.stroke(path);
+  context.stroke(path);
 
-    setState({ paths: [...state.paths, { id, path }] });
-  }
-
-  return {
-    drawLines,
-    renderActiveLine,
-    drawLine,
-  };
+  this.setState({ paths: [...this.state.paths, { id, path }] });
 }

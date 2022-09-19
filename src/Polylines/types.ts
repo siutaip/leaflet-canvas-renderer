@@ -5,6 +5,7 @@ export type Path = {
 
 export type State = {
   list: Array<Polyline>;
+  viewport: Array<Polyline>;
   paths: Array<Path>;
   hovering: string;
 };
@@ -22,7 +23,7 @@ export type Polyline = {
   color?: string;
 };
 
-export type Options = {
+export type Props = {
   onHover?: (id: string) => void;
   onClick?: (id: string) => void;
   list?: Array<Polyline>;
