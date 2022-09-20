@@ -1,27 +1,16 @@
-// export type CanvasEventTarget = {
-//   type: 'polyline' | 'marker' | null;
-//   id: string | null;
-// };
-
-// export type CanvasEvent = {
-//   name: string;
-//   target: CanvasEventTarget;
-// };
-
-export type CanvasOverlayContext<State, Item> = {
-  events?: () => void;
+export type CanvasOverlayContext<State> = {
+  onAdd?: () => void;
+  onRemove?: () => void;
   drawPrimary: () => void;
   drawSecondary: () => void;
   setupViewport: () => void;
 
   zIndex?: number;
   state?: State;
-  actions?: {
-    add: (polyline: Item | Array<Item>) => void;
-  };
 };
 
-export type Overlay<Props> = {
+export type Overlay<Props, Item> = {
   [key: string]: any;
   props: Props;
+  add: (item: Item | Array<Item>) => void;
 };

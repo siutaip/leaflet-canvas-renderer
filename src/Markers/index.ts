@@ -10,9 +10,10 @@ import {
   handleDragEnd,
   handleDragMove,
 } from './events';
+import { LeafletMouseEvent } from 'leaflet';
 
 export function Markers(props: Props = { list: [] }) {
-  const context: CanvasOverlayContext<State, Marker> = {
+  const context: CanvasOverlayContext<State> = {
     zIndex: 200,
 
     state: {
@@ -23,28 +24,25 @@ export function Markers(props: Props = { list: [] }) {
       dragStart: null,
     },
 
-    events: function () {
+    onAdd: function () {
       if (typeof this.props.preload === 'function') {
         this.props.preload().then(() => this.redraw());
       }
 
       this._map.on('click', handleClick.bind(this));
-      this._map.on('mousemove', handleHover.bind(this));
-      this._map.on('mousedown', handleDragStart.bind(this));
       this._map.on('mouseup', handleDragEnd.bind(this));
-      this._map.on('mousemove', handleDragMove.bind(this));
+      this._map.on('mousemove', (e: LeafletMouseEvent) => {
+        handleDragMove.call(this, e);
+        handleHover.call(this, e);
+      });
+      this._map.on('mousedown', handleDragStart.bind(this));
     },
 
-    actions: {
-      add: function (marker) {
-        if (Array.isArray(marker)) {
-          this.setState({ list: [...this.state.list, ...marker] });
-        } else {
-          this.setState({ list: [...this.state.list, marker] });
-        }
-        setupViewport.call(this);
-        this.redraw();
-      },
+    onRemove: function () {
+      this._map.off('click');
+      this._map.off('mousedown');
+      this._map.off('mouseup');
+      this._map.off('mousemove');
     },
 
     drawPrimary,
@@ -52,7 +50,7 @@ export function Markers(props: Props = { list: [] }) {
     setupViewport,
   };
 
-  const overlay: Overlay<Props> = canvasOverlay(context, props);
+  const overlay: Overlay<Props, Marker> = canvasOverlay(context, props);
 
   function setupViewport() {
     this.setState({

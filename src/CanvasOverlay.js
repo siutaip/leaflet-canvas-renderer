@@ -1,14 +1,13 @@
 import * as L from 'leaflet';
 
 const CanvasOverlay = L.Layer.extend({
-  initialize: function (context, props) {
-    this.setContext(context);
-    this.setProps(props);
-
-    L.setOptions(this, {});
+  initialize(context, props) {
+    this.state = context.state || {};
+    this.props = props;
+    this._context = context;
   },
 
-  setState: function (newState) {
+  setState(newState) {
     Object.keys(newState).forEach((key) => {
       if (this.state.hasOwnProperty(key)) {
         this.state[key] = newState[key];
@@ -16,57 +15,52 @@ const CanvasOverlay = L.Layer.extend({
     });
   },
 
-  setContext: function (context) {
-    // setup state
-    this.state = context.state || {};
+  add(marker) {
+    const list = [
+      ...this.state.list,
+      ...(Array.isArray(marker) ? marker : [marker]),
+    ].sort((a, b) => {
+      if (a.order > b.order) {
+        return -1;
+      }
+      if (a.order < b.order) {
+        return -1;
+      }
 
-    // setup actions
-    this._context = context;
-    if (typeof context.actions === 'object') {
-      Object.keys(context.actions).forEach((key) => {
-        const action = context.actions[key];
+      return 0;
+    });
 
-        if (typeof action === 'function') {
-          this[key] = action.bind(this);
-        }
-      });
-    }
-
-    // setup setup
-    this._events = context.events.bind(this);
+    this.setState({ list });
+    setupViewport.call(this);
+    this.redraw();
   },
 
-  setProps: function (props) {
-    this.props = props;
-  },
-
-  drawing: function (userDrawFunc) {
+  drawing(userDrawFunc) {
     this._userDrawFunc = userDrawFunc;
     return this;
   },
 
-  params: function (options) {
-    L.setOptions(this, options);
-    return this;
-  },
-
-  canvas: function () {
+  canvas() {
     return this._canvas;
   },
 
-  secondaryCanvas: function () {
+  secondaryCanvas() {
     return this._secondaryCanvas;
   },
 
-  redraw: function () {
+  redraw() {
     if (!this._frame) {
       this._frame = L.Util.requestAnimFrame(this._redraw, this);
     }
     return this;
   },
 
-  onAdd: function (map) {
+  onAdd(map) {
     this._map = map;
+
+    if (!this._map._data) {
+      this._map._data = {};
+    }
 
     this._canvas = this._createCanvasElement(
       'primary-canvas',
@@ -77,24 +71,27 @@ const CanvasOverlay = L.Layer.extend({
       this._context.zIndex + 1,
     );
 
-    map.on('moveend', this._reset, this);
+    map.on('movestart', () => {
+      map.isDragging = true;
+    });
+
+    map.on(
+      'moveend',
+      () => {
+        map.isDragging = false;
+        this._reset();
+      },
+      this,
+    );
     map.on('resize', this._resize, this);
 
     if (map.options.zoomAnimation && L.Browser.any3d) {
       map.on('zoomanim', this._animateZoom, this);
     }
 
-    if (typeof this._events === 'function') {
-      this._events.call(this);
+    if (typeof this._context.onAdd === 'function') {
+      this._context.onAdd.call(this);
     }
-
-    map.on('movestart', () => {
-      map.isDragging = true;
-    });
-
-    map.on('moveend', () => {
-      map.isDragging = false;
-    });
 
     this._reset();
   },
@@ -123,7 +120,7 @@ const CanvasOverlay = L.Layer.extend({
     return element;
   },
 
-  onRemove: function (map) {
+  onRemove(map) {
     map.getPanes().overlayPane.removeChild(this._canvas);
     map.getPanes().overlayPane.removeChild(this._secondaryCanvas);
 
@@ -133,22 +130,23 @@ const CanvasOverlay = L.Layer.extend({
     if (map.options.zoomAnimation) {
       map.off('zoomanim', this._animateZoom, this);
     }
+    this._canvas = null;
     this._secondaryCanvas = null;
   },
 
-  addTo: function (map) {
+  addTo(map) {
     map.addLayer(this);
     return this;
   },
 
-  _resize: function (resizeEvent) {
+  _resize(resizeEvent) {
     this._canvas.width = resizeEvent.newSize.x;
     this._canvas.height = resizeEvent.newSize.y;
 
     this._secondaryCanvas.width = resizeEvent.newSize.x;
     this._secondaryCanvas.height = resizeEvent.newSize.y;
   },
-  _reset: function () {
+  _reset() {
     const topLeft = this._map.containerPointToLayerPoint([0, 0]);
     L.DomUtil.setPosition(this._canvas, topLeft);
     L.DomUtil.setPosition(this._secondaryCanvas, topLeft);
@@ -160,7 +158,7 @@ const CanvasOverlay = L.Layer.extend({
     this._redraw();
   },
 
-  _redraw: function () {
+  _redraw() {
     const size = this._map.getSize();
     const bounds = this._map.getBounds();
     const zoomScale =
@@ -177,7 +175,7 @@ const CanvasOverlay = L.Layer.extend({
     this._frame = null;
   },
 
-  _animateZoom: function (e) {
+  _animateZoom(e) {
     const scale = this._map.getZoomScale(e.zoom),
       offset = this._map
         ._getCenterOffset(e.center)

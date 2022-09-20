@@ -14,7 +14,7 @@ const defaultProps: Props = {
 export function Polylines(p: Props = {}) {
   const props = { ...defaultProps, ...p };
 
-  const context: CanvasOverlayContext<State, Polyline> = {
+  const context: CanvasOverlayContext<State> = {
     zIndex: 100,
 
     state: {
@@ -24,28 +24,19 @@ export function Polylines(p: Props = {}) {
       hovering: null,
     },
 
-    events: function () {
+    onAdd: function () {
       this._map.on('mousemove', handleHover.bind(this));
       this._map.on('click', handleClick.bind(this));
     },
 
-    actions: {
-      add: function (polyline) {
-        if (Array.isArray(polyline)) {
-          this.setState({ list: [...this.state.list, ...polyline] });
-        } else {
-          this.setState({ list: [...this.state.list, polyline] });
-        }
-        this.redraw();
-      },
-    },
+    onRemove: function () {},
 
     drawPrimary,
     drawSecondary,
     setupViewport,
   };
 
-  const overlay: Overlay<Props> = canvasOverlay(context, props);
+  const overlay: Overlay<Props, Polyline> = canvasOverlay(context, props);
 
   function setupViewport() {
     this.setState({
