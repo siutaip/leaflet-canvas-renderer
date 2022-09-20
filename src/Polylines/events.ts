@@ -2,7 +2,15 @@ import type { LeafletMouseEvent } from 'leaflet';
 import { Path } from './types';
 
 export function handleHover({ containerPoint: { x, y } }: LeafletMouseEvent) {
-  if (this._map._data?.dragging || this._map.isDragging) return;
+  if (
+    this._map._data?.dragging ||
+    this._map._data?.hovering ||
+    this._map.isDragging
+  ) {
+    this.setState({ hovering: null });
+    this._context.drawSecondary.call(this);
+    return;
+  }
 
   const route = this.state.paths.find(
     ({ id }: Path) => id === this.state.hovering,

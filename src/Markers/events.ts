@@ -116,6 +116,7 @@ export function handleClick({ containerPoint: { x, y } }: LeafletMouseEvent) {
 
 export function handleHover({ containerPoint: { x, y } }: LeafletMouseEvent) {
   const marker = findMarker.call(this, x, y);
+  this._map._data.hovering = marker;
 
   if (marker && typeof this.props.onHover === 'function') {
     this.props.onHover.call(this, marker.id);
