@@ -120,16 +120,19 @@
 
       markers.addTo(map);
 
-      markers.add([
-        {
-          id: 'xyz123',
-          lat: -20.413442150600797,
-          lng: -115.15749652566164,
-          order: 1,
-        },
-      ]);
+      markers.add(fetchPoints(5000));
 
       // Polylines:
+      const polylines = Polylines({
+        onHover(id) {
+          console.log(`Polyline hover ${id}`);
+        },
+        onClick(id) {
+          console.log(`Polyline click ${id}`);
+        },
+      });
+      polylines.addTo(map);
+      polylines.add(fetchRoutes(300, [1000, 2000]));
 
       function random(min, max) {
         return Math.random() * (max - min + 1) + min;
@@ -175,16 +178,33 @@
         return routes;
       }
 
-      const polylines = Polylines({
-        onHover(id) {
-          console.log(`Polyline hover ${id}`);
-        },
-        onClick(id) {
-          console.log(`Polyline click ${id}`);
-        },
-      });
-      polylines.addTo(map);
-      polylines.add(fetchRoutes(30));
+      function fetchPoints(points) {
+        const columns = 100;
+        const lines = points / columns;
+        let line = 0;
+        const markers = [];
+
+        while (line < lines) {
+          let column = 0;
+
+          while (column < columns) {
+            const id = uuid.v4();
+            let lat = -6.413442150600797 - column * 0.5;
+            let lng = -65.15749652566164 - line * 0.5;
+
+            markers.push({
+              id,
+              order: line * 1000 + column * 10,
+              lat,
+              lng,
+            });
+            column = column + 1;
+          }
+
+          line = line + 1;
+        }
+        return markers;
+      }
     </script>
   </body>
 </html>
