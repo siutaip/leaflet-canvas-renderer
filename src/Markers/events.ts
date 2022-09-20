@@ -24,12 +24,7 @@ export function findMarker(x: number, y: number) {
           return -1;
         }
 
-        return 0;
-      })[0] || null
-  );
-}
-
-function defaultHasTouch(marker: Position, { x, y }: Position) {
+function isUnderPoint(marker: Position, { x, y }: Position) {
   const width = 10;
   const height = 15;
 
@@ -50,14 +45,14 @@ function defaultHasTouch(marker: Position, { x, y }: Position) {
   return false;
 }
 
-export function markersInPoint(x: number, y: number) {
+export function markersInPoint(x: number, y: number): MarkerWithPosition[] {
   return this.state.viewport.filter((marker: MarkerWithPosition) => {
     if (typeof this.props.draw === 'function') {
-      if (typeof this.props.hasTouch === 'function') {
-        return this.props.hasTouch(marker, { x, y });
+      if (typeof this.props.isUnderPoint === 'function') {
+        return this.props.isUnderPoint(marker, { x, y });
       }
     } else {
-      return defaultHasTouch(marker, { x, y });
+      return isUnderPoint(marker, { x, y });
     }
   });
 }

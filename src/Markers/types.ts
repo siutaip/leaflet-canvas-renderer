@@ -31,6 +31,9 @@ export type Props = {
   onHover?: (id: string) => void;
   onClick?: (id: string) => void;
   preload?: () => Promise<void>;
-  hasTouch?: (markerPosition: Position, cursorPosition: Position) => boolean;
+  isUnderPoint?: (
+    markerPosition: Position,
+    cursorPosition: Position,
+  ) => boolean;
   draw?: (context: CanvasRenderingContext2D, position: Position) => void;
 };

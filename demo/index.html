@@ -87,7 +87,7 @@
             images.markerShadow.onload = imageLoad;
           });
         },
-        hasTouch(marker, { x, y }) {
+        isUnderPoint(marker, { x, y }) {
           const markerStart = {
             x: marker.x - images.markerIcon.width / 2,
             y: marker.y - images.markerIcon.height,
