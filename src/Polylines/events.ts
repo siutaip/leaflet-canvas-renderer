@@ -32,7 +32,7 @@ export function handleHover({ containerPoint: { x, y } }: LeafletMouseEvent) {
   this._context.drawSecondary.call(this);
 
   if (this.state.hovering && typeof this.props.onHover === 'function') {
-    this.props.onHover.call(this, this.state.hovering);
+    this.props.onHover(this.state.hovering);
   }
 }
 
@@ -48,6 +48,6 @@ export function handleClick({ containerPoint: { x, y } }: LeafletMouseEvent) {
   });
 
   if (clicked && typeof this.props.onClick === 'function') {
-    this.props.onClick.call(this, clicked);
+    this.props.onClick(clicked);
   }
 }
