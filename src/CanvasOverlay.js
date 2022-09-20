@@ -31,7 +31,7 @@ const CanvasOverlay = L.Layer.extend({
     });
 
     this.setState({ list });
-    setupViewport.call(this);
+    this._context.setupViewport.call(this);
     this.redraw();
   },
 
