@@ -12,17 +12,9 @@ import { setDragging, saveMarkerPosition } from './actions';
  * @param {number} y
  * @returns string | null
  */
-export function findMarker(x: number, y: number) {
-  return (
-    markersInPoint
-      .call(this, x, y)
-      .sort((a: MarkerWithPosition, b: MarkerWithPosition) => {
-        if (a.order > b.order) {
-          return -1;
-        }
-        if (a.order < b.order) {
-          return -1;
-        }
+export function findMarker(x: number, y: number): MarkerWithPosition {
+  return (markersInPoint.call(this, x, y)[0] as MarkerWithPosition) || null;
+}
 
 function isUnderPoint(marker: Position, { x, y }: Position) {
   const width = 10;
